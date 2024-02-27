@@ -1,0 +1,11 @@
+shop: Связной2
+
+goods:
+  - id: 421629
+    name: Смартфон Apple iPhone XS Max 512GB (золотистый)
+    description: Описание крутого айфона
+    price: 110000
+  - id: 4525
+    name: Тестовый продукт
+    price: 141414
+    description: Описание крутого теста

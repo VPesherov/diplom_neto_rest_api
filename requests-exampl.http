@@ -1,0 +1,133 @@
+
+@baseUrl = http://localhost:8000/
+
+# создание пользователя
+POST {{baseUrl}}/user/register
+Content-Type: application/json
+
+{
+  "username": "CoolIvan",
+  "first_name": "Иван",
+  "last_name": "Иванов",
+  "email": "ivan1@yandex.ru",
+  "password": "1234567a1"
+}
+
+###
+
+# авторизация пользователя
+
+POST {{baseUrl}}/user/signin
+Content-Type: application/json
+
+{
+    "email": "ivan1@yandex.ru",
+    "password": "1234567a1"
+}
+
+###
+
+# восстановление пароля
+
+PATCH {{baseUrl}}/user/password_reset
+Content-Type: application/json
+
+{
+    "email": "ivan1@yandex.ru",
+    "first_name": "Иван",
+    "last_name": "Иванов"
+}
+
+###
+
+# вход с новым паролем
+
+POST {{baseUrl}}/user/signin
+Content-Type: application/json
+
+{
+    "email": "ivan1@yandex.ru",
+    "password": "safa1235fa21"
+}
+
+# получаем список продуктов
+
+###
+GET {{baseUrl}}/catalog
+Content-Type: application/json
+
+# получаем список продуктов
+
+###
+GET {{baseUrl}}/catalog/1
+Content-Type: application/json
+
+# получаем корзину
+
+###
+GET {{baseUrl}}/basket
+Content-Type: application/json
+Authorization: Token 6c077373d5a81c0299135305d13ac3751a5c2066
+
+# добавление в корзину
+
+###
+
+POST {{baseUrl}}/basket/
+Content-Type: application/json
+Authorization: Token 6c077373d5a81c0299135305d13ac3751a5c2066
+
+{
+    "items" : [ {"id": 5, "quantity": 11}, {"id": 6, "quantity": 10}]
+}
+
+
+# удаление товара из корзины
+
+###
+
+DELETE {{baseUrl}}/basket/
+Content-Type: application/json
+Authorization: Token 6c077373d5a81c0299135305d13ac3751a5c2066
+
+{
+    "items" : [{"product_id": 5}, {"product_id": 6}]
+}
+
+
+###
+
+# изменения адреса доставки
+
+PATCH {{baseUrl}}/change_delivery_address/
+Content-Type: application/json
+Authorization: Token 6c077373d5a81c0299135305d13ac3751a5c2066
+
+{
+    "delivery_address": "Улица уличная квартира квартирашная"
+}
+
+###
+
+# удаление адреса доставки
+
+DELETE {{baseUrl}}/change_delivery_address/
+Content-Type: application/json
+Authorization: Token 6c077373d5a81c0299135305d13ac3751a5c2066
+
+
+###
+
+# подтверждение заказа пользователем
+
+PATCH  {{baseUrl}}/confirmed_order_by_user/
+Content-Type: application/json
+Authorization: Token 6c077373d5a81c0299135305d13ac3751a5c2066
+
+
+# получение магазином его заказов
+
+###
+GET {{baseUrl}}/user/orders/
+Content-Type: application/json
+Authorization: Token 6c077373d5a81c0299135305d13ac3751a5c2066
