@@ -33,7 +33,9 @@ urlpatterns = [
     path('basket/', BasketView.as_view(), name='basket'),
     path('change_delivery_address/', DeliveryAddressView.as_view(), name='delivery-address'),
     path('confirmed_order_by_user/', ConfirmedOrderByUserView.as_view(), name='confirmed-order-user'),
-    path('user/orders/', UserOrderView.as_view(), name='shop-orders')
-    # path('')
+    path('user/orders/', UserOrderView.as_view(), name='shop-orders'),
+    path('user/orders/<int:order_id>/', UserOrderView.as_view(), name='shop-orders'),
+    # path('user/orders/<int:order_id>/', UserOrderView.as_view(), name='shop-orders'),
+    # path('email/', my_email_view, name='normal-email')
 ]
 

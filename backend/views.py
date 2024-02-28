@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 from django.db import IntegrityError
 from django.db.models import Sum, F
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render
 from requests import get
 from rest_framework.authtoken.models import Token
@@ -12,6 +12,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from yaml import load as load_yaml, Loader
 from ujson import loads as load_json
+from django.core.mail import send_mail
+from django.conf import settings
 
 from backend.models import Shop, Product, User, Order, OrderItem
 from backend.serializers import UserSerializer, ProductSerializer, OrderSerializer, OrderItemSerializer
@@ -236,6 +238,7 @@ class DeliveryAddressView(APIView):
         return JsonResponse({'Status': "Success"})
 
 
+# подтверждение заказа(без Email((( )
 class ConfirmedOrderByUserView(APIView):
     def patch(self, request):
         if not request.user.is_authenticated:
@@ -243,6 +246,11 @@ class ConfirmedOrderByUserView(APIView):
                                 status=403)
         basket = get_object_or_None(Order, user_id=request.user.id, state='basket')
         if basket:
+
+            order_item = OrderItem.objects.filter(order=basket).count()
+            if order_item == 0:
+                return JsonResponse({"Status": "Error", "Error": "Вы не можете подтвердить пустой заказ"})
+
             user = User.objects.get(id=request.user.id)
             if user.delivery_address == '':
                 return JsonResponse({"Status": "Error", "Error": "Для подтверждения заказа необходимо указать адрес"})
@@ -253,17 +261,65 @@ class ConfirmedOrderByUserView(APIView):
 
         return JsonResponse({"Status": "Error", "Error": "Заказ не найден"})
 
-# не доделал
+
+# получение заказа и выбранного заказа по id
 class UserOrderView(APIView):
     def get(self, request, order_id=None):
         if not request.user.is_authenticated:
             return JsonResponse({'Status': "Error", 'Error': 'Для выполнение данной операции нужно авторизоваться'},
                                 status=403)
 
-        # orders = Order.objects.filter(user=request.user)
-        orders = Order.objects.filter(
-            user_id=request.user.id).prefetch_related('ordered_items__product_info').annotate(
-            total_sum=Sum(F('ordered_items__quantity') * F('ordered_items__product_info__price'))).distinct()
+        if order_id:
+            orders = Order.objects.filter(
+                user_id=request.user.id, id=order_id).prefetch_related('ordered_items__product_info').annotate(
+                total_sum=Sum(F('ordered_items__quantity') * F('ordered_items__product_info__price'))).distinct()
+        else:
+            orders = Order.objects.filter(
+                user_id=request.user.id).prefetch_related('ordered_items__product_info').annotate(
+                total_sum=Sum(F('ordered_items__quantity') * F('ordered_items__product_info__price'))).distinct()
         order_serializer = OrderSerializer(orders, many=True)
         # return JsonResponse({"State": 1})
         return Response(order_serializer.data)
+
+    def patch(self, request, order_id):
+        if not request.user.is_authenticated:
+            return JsonResponse({'Status': "Error", 'Error': 'Для выполнение данной операции нужно авторизоваться'},
+                                status=403)
+
+        state = request.data.get('state')
+
+        if request.user.type == 'user' and state != 'canceled':
+            return JsonResponse({'Status': "Error", '1Error': 'Вы не можете накладывать данный статус на заказ'},
+                                status=403)
+
+        elif request.user.type == 'shop' and state not in ('assembled', 'sent', 'delivered', 'canceled'):
+            return JsonResponse({'Status': "Error", '2Error': 'Вы не можете накладывать данный статус на заказ'},
+                                status=403)
+        order = get_object_or_None(Order, id=order_id)
+
+        if not order:
+            return JsonResponse({"Status": "Error", "Error": "Данный заказ не найден"})
+
+        order.state = state
+        order.save()
+
+        return JsonResponse({"Status": "Success"})
+
+# не работает(
+
+# def send_custom_email(subject, message, recipient_list):
+#     # Send the email using Django's send_mail function
+#     send_mail(subject, message, settings.EMAIL_HOST_USER, recipient_list)
+#
+#
+# def my_email_view(request):
+#     # ... Your view logic ...
+#
+#     subject = 'Hello from Django'
+#     message = 'This is a test email sent from Django.'
+#     recipient_list = ['frobbyword@yandex.ru']  # Replace with the recipient's email addresses
+#
+#     send_custom_email(subject, message, recipient_list)
+#
+#     # ... Rest of your view logic ...
+#     return HttpResponse("Normal Email Send Successfully!")
