@@ -287,14 +287,15 @@ class UserOrderView(APIView):
                                 status=403)
 
         state = request.data.get('state')
-
         if request.user.type == 'user' and state != 'canceled':
-            return JsonResponse({'Status': "Error", '1Error': 'Вы не можете накладывать данный статус на заказ'},
+            return JsonResponse({'Status': "Error", 'Error': 'Вы не можете накладывать данный статус на заказ'},
                                 status=403)
 
         elif request.user.type == 'shop' and state not in ('assembled', 'sent', 'delivered', 'canceled'):
-            return JsonResponse({'Status': "Error", '2Error': 'Вы не можете накладывать данный статус на заказ'},
+            return JsonResponse({'Status': "Error", 'Error': 'Вы не можете накладывать данный статус на заказ'},
                                 status=403)
+        if state not in ('assembled', 'sent', 'delivered', 'canceled'):
+            return JsonResponse({'Status': 'Error', 'Error': 'Такой статус заказа нельзя присвоить'})
         order = get_object_or_None(Order, id=order_id)
 
         if not order:
